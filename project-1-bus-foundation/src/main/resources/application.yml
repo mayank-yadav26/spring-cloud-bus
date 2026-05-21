@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: bus-foundation
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  cloud:
+    bus:
+      enabled: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: busrefresh,busenv,refresh,health,info
+  endpoint:
+    health:
+      show-details: always
