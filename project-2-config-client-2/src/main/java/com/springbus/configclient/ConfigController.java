@@ -1,9 +1,11 @@
 package com.springbus.configclient;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 public class ConfigController {
 
@@ -12,7 +14,7 @@ public class ConfigController {
 
     @GetMapping("/config")
     public ConfigResponse getConfig() {
-        System.out.println("Current config - Message: " + appConfig.getMessage() + ", Version: " + appConfig.getVersion());
+        log.info("Current config - Message: {}, Version: {}", appConfig.getMessage(), appConfig.getVersion());
         return new ConfigResponse(appConfig.getMessage(), appConfig.getVersion());
     }
 

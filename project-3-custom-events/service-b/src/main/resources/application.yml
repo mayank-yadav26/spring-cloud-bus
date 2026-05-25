@@ -17,7 +17,14 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,busrefresh
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    root: INFO
+    "[com.springbus]": DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %logger{36} - %msg%n"

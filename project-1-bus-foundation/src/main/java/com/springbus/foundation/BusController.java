@@ -1,9 +1,11 @@
 package com.springbus.foundation;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 public class BusController {
 
@@ -14,7 +16,7 @@ public class BusController {
 
     @PostMapping("/test-message")
     public String sendTestMessage() {
-        System.out.println("Test message endpoint triggered!");
+        log.info("Test message endpoint triggered!");
         return "Message sent to bus";
     }
 

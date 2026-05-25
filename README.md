@@ -1,218 +1,296 @@
-# Spring Cloud Bus Learning Path
+# Spring Cloud Bus - Distributed Communication & Configuration Management
 
-A comprehensive learning project for mastering **Spring Cloud Bus**, a distributed communication framework for microservices using message brokers RabbitMQ.
+A comprehensive learning project demonstrating **Spring Cloud Bus** for building microservices with distributed communication, dynamic configuration management, and event-driven architecture using RabbitMQ.
 
 ## 📚 What is Spring Cloud Bus?
 
-Spring Cloud Bus connects multiple service instances using a lightweight message broker, enabling:
-- **Dynamic Configuration Refresh** - Update configs across all services without restart
-- **Distributed Events** - Broadcast custom events across microservices
-- **Service Coordination** - Propagate admin commands/state changes instantly
-- **Event-Driven Architecture** - Build reactive systems with loosely coupled services
+Spring Cloud Bus connects multiple microservice instances using a message broker (RabbitMQ/Kafka), enabling:
+- **Dynamic Configuration Refresh** - Update application configs across all services instantly without restart
+- **Distributed Event Broadcasting** - Publish custom events to all connected microservices
+- **Service Coordination** - Propagate admin commands and state changes in real-time
+- **Event-Driven Architecture** - Build reactive, loosely-coupled microservice systems
 
-## 🎯 Learning Path
+## 🏗️ Project Architecture
 
-This project includes 4 progressive projects designed for beginners:
+This learning project consists of 4 practical applications:
 
-| Project | Goal | Services | Duration |
-|---------|------|----------|----------|
-| **1. Bus Foundation** | Verify RabbitMQ connectivity | 1 | 30-45 min |
-| **2. Config Server + Clients** | Master dynamic configuration refresh | 3 | 1-1.5 hrs |
-| **3. Custom Events** | Broadcast events between services | 2 | 1 hour |
-| **4. Multi-Service Coordination** | Integrate all patterns | 3 | 1-1.5 hrs (optional) |
+### **Project 1: Bus Foundation** 
+- **Purpose**: Verify RabbitMQ connectivity and Spring Cloud Bus setup
+- **Services**: 1 (port 8080)
+- **Learning**: Basic bus initialization, message broker connection
+- **Files**: `project-1-bus-foundation/`
 
-## 🚀 Quick Start
+### **Project 2: Config Server & Clients**
+- **Purpose**: Centralized configuration management with dynamic refresh
+- **Services**: 3 (Config Server on 8888, Client-1 on 8081, Client-2 on 8082)
+- **Learning**: Config server setup, client properties binding, `/actuator/busrefresh` endpoint
+- **Features**: Dynamic configuration updates propagated to all clients via bus
+- **Files**: `project-2-config-server/`, `project-2-config-client-1/`, `project-2-config-client-2/`
 
-### Prerequisites
-- ✅ Java 21+ (already installed)
-- ✅ Maven 3.8+ (already installed)
-- ✅ Docker (already installed)
-- ✅ curl (for testing)
+### **Project 3: Custom Events Broadcasting** ⭐ 
+- **Purpose**: Implement custom RemoteApplicationEvent for inter-service communication
+- **Services**: 2 (Service A on 8091, Service B on 8092)
+- **Learning**: Custom event definition, event publishing via ApplicationEventPublisher, event listening with `@EventListener`
+- **Key Feature**: `@RemoteApplicationEventScan` annotation for proper event deserialization
+- **Files**: `project-3-custom-events/shared/`, `project-3-custom-events/service-a/`, `project-3-custom-events/service-b/`
 
-### Run Project 1 (Bus Foundation) - 30 minutes
-
-```bash
-# 1. Start RabbitMQ
-docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management-alpine
-
-# 2. Build and run Project 1
-cd project-1-bus-foundation
-mvn clean install
-mvn spring-boot:run
-
-# 3. Test (in another terminal)
-curl http://localhost:8080/health
-curl -X POST http://localhost:8080/actuator/busrefresh
-```
-
-### See Full Documentation
-
-👉 **[RUN_GUIDE.md](RUN_GUIDE.md)** - Comprehensive step-by-step guide for all projects
-
-### Plan Document
-
-👉 **[.github/prompts/plan-springCloudBus.prompt.md](.github/prompts/plan-springCloudBus.prompt.md)** - Detailed learning plan
-
----
-
-## 📂 Project Structure
+## 📋 Project Structure
 
 ```
 spring-cloud-bus/
-├── project-1-bus-foundation/           # Basic bus connectivity
+├── project-1-bus-foundation/
 │   ├── pom.xml
-│   └── src/main/java/com/springbus/foundation/
+│   ├── src/main/java/com/springbus/foundation/
+│   │   └── BusController.java
+│   └── src/main/resources/application.yml
 │
-├── project-2-config-server/            # Central config repository
+├── project-2-config-server/
 │   ├── pom.xml
-│   ├── src/main/resources/config/config-client-1.yml
-│   ├── src/main/resources/config/config-client-2.yml
-│   └── src/main/java/com/springbus/configserver/
+│   ├── src/main/java/com/springbus/configserver/
+│   │   └── ConfigServerApplication.java
+│   ├── src/main/resources/application.yml
+│   └── src/main/resources/config/
+│       ├── config-client-1.yml
+│       └── config-client-2.yml
 │
-├── project-2-config-client-1/          # Config consumer 1
-├── project-2-config-client-2/          # Config consumer 2
+├── project-2-config-client-1/
+│   ├── pom.xml
+│   └── src/main/resources/application.yml
+│
+├── project-2-config-client-2/
+│   ├── pom.xml
+│   └── src/main/resources/application.yml
+│
+├── project-2-config-server/
+│   ├── pom.xml
+│   └── src/main/resources/application.yml
 │
 ├── project-3-custom-events/
-│   ├── shared/                         # Shared event classes
-│   ├── service-a/                      # Event publisher
-│   └── service-b/                      # Event listener
+│   ├── shared/
+│   │   ├── pom.xml
+│   │   └── src/main/java/com/springbus/shared/
+│   │       ├── NotificationEvent.java (extends RemoteApplicationEvent)
+│   │       └── BroadcastMessage.java
+│   │
+│   ├── service-a/
+│   │   ├── pom.xml
+│   │   ├── src/main/java/com/springbus/servicea/
+│   │   │   ├── ServiceAApplication.java
+│   │   │   ├── ServiceAController.java
+│   │   │   ├── MessageBroadcaster.java
+│   │   │   └── RabbitMQConfig.java
+│   │   └── src/main/resources/application.yml
+│   │
+│   └── service-b/
+│       ├── pom.xml
+│       ├── src/main/java/com/springbus/serviceb/
+│       │   ├── ServiceBApplication.java
+│       │   ├── NotificationListener.java
+│       │   ├── ServiceBController.java
+│       │   └── RabbitMQConfig.java
+│       └── src/main/resources/application.yml
 │
-├── RUN_GUIDE.md                        # Complete step-by-step guide
-└── README.md                           # This file
+├── scripts/
+│   ├── start-rabbitmq.sh       # Start RabbitMQ in Docker
+│   ├── stop-rabbitmq.sh        # Stop RabbitMQ
+│   ├── run-project-2-client-1.sh
+│   ├── run-project-2-client-2.sh
+│   ├── run-project-2-config-server.sh
+│   ├── run-project-3-service-a.sh
+│   ├── run-project-3-service-b.sh
+│   └── setup.sh
+│
+├── README.md                    # This file
+├── QUICK_START.md              # Quick start guide
+└── .gitignore
 ```
 
----
+## 🛠️ Technology Stack
 
-## 🔑 Key Concepts
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| **Java** | 21 | Language runtime |
+| **Spring Boot** | 3.3.1 | Framework |
+| **Spring Cloud** | 2023.0.3 | Microservices patterns |
+| **RabbitMQ** | 3.13+ | Message broker |
+| **Maven** | 3.8+ | Build tool |
+| **Lombok** | Latest | Code generation (annotations) |
+| **SLF4J** | Via Spring Boot | Logging framework |
+
+## 🔑 Key Implementation Patterns
 
 ### 1. Dynamic Configuration Refresh (Project 2)
 ```
-Update Config File → POST /actuator/busrefresh → All Services Refresh Immediately
+Update Config File → POST /actuator/busrefresh → RabbitMQ → All Clients Refresh
 ```
 
 ### 2. Custom Event Broadcasting (Project 3)
 ```
-Service A publishes NotificationEvent → Message Broker → Service B listens via @EventListener
+Service A publishes NotificationEvent 
+→ Spring Cloud Bus intercepts 
+→ JSON serialization via RabbitMQ 
+→ Service B deserializes via @RemoteApplicationEventScan 
+→ @EventListener invoked
 ```
 
-### 3. Bus Connectivity (Project 1)
+### 3. Message Flow
 ```
-Service ↔ Spring Cloud Bus ↔ RabbitMQ ↔ Spring Cloud Bus ↔ Service
+Application → ApplicationEventPublisher → Spring Cloud Bus → RabbitMQ 
+→ Spring Cloud Bus → Remote Services → Event Listeners
 ```
 
----
+## 📦 Dependencies Used
 
-## 📝 Technology Stack
+### Core
+- `spring-boot-starter-web` - REST endpoints
+- `spring-cloud-starter-bus-amqp` - Spring Cloud Bus + RabbitMQ
+- `spring-boot-starter-actuator` - Management endpoints
 
-| Component | Version |
-|-----------|---------|
-| Java | 21 |
-| Spring Boot | 3.3.1 |
-| Spring Cloud | 2023.0.3 |
-| RabbitMQ | 3.x (Docker) |
-| Maven | 3.8+ |
+### Config Management (Project 2)
+- `spring-cloud-starter-config` - Config server client
 
----
+### Code Generation
+- `lombok` - Annotations for logging, getters, setters
 
-## 🧪 Testing Commands
+## ✅ Prerequisites
 
-### Project 1 - Bus Foundation
+Before running any project:
+
 ```bash
-curl http://localhost:8080/health
-curl http://localhost:8080/info
-curl -X POST http://localhost:8080/actuator/busrefresh
+✅ Java 21 or higher
+✅ Maven 3.8+
+✅ Docker (for RabbitMQ)
+✅ curl or Postman (for testing endpoints)
 ```
 
-### Project 2 - Config Server & Clients
+## 🚀 Running the Projects
+
+### Start RabbitMQ (Required for all projects)
 ```bash
-# Get current config
-curl http://localhost:8081/config
-curl http://localhost:8082/config
-
-# After updating config file on server, refresh all clients
-curl -X POST http://localhost:8081/actuator/busrefresh
-
-# Verify both clients got updated
-curl http://localhost:8081/config
-curl http://localhost:8082/config
+cd scripts
+./start-rabbitmq.sh
 ```
 
-### Project 3 - Custom Events
+Access RabbitMQ Management:
+- URL: http://localhost:15672
+- Username: `guest`
+- Password: `guest`
+
+### Option 1: Run Individual Projects Manually
+
+**Project 1:**
 ```bash
-# Send notification from Service A
-curl -X POST "http://localhost:8091/notify?message=Test+message"
-
-# Check Service B logs for received event
+cd project-1-bus-foundation
+mvn spring-boot:run
 ```
 
+**Project 2 - Config Server:**
+```bash
+cd project-2-config-server
+mvn spring-boot:run
+```
+
+**Project 2 - Config Clients (separate terminals):**
+```bash
+cd project-2-config-client-1
+mvn spring-boot:run
+
+cd project-2-config-client-2
+mvn spring-boot:run
+```
+
+**Project 3 - Service A:**
+```bash
+cd project-3-custom-events/service-a
+mvn spring-boot:run
+```
+
+**Project 3 - Service B:**
+```bash
+cd project-3-custom-events/service-b
+mvn spring-boot:run
+```
+
+### Option 2: Use Provided Scripts
+```bash
+./scripts/run-project-2-config-server.sh
+./scripts/run-project-2-client-1.sh
+./scripts/run-project-2-client-2.sh
+./scripts/run-project-3-service-a.sh
+./scripts/run-project-3-service-b.sh
+```
+
+## 📊 Testing Each Project
+
+See **[QUICK_START.md](QUICK_START.md)** for detailed testing commands for each project.
+
+## 🎓 Learning Path
+
+1. **Start with Project 1** (10 min) - Understand basic connectivity
+2. **Then Project 2** (20 min) - Master configuration management
+3. **Finally Project 3** (15 min) - Implement custom events
+
+**Total learning time: ~45 minutes** ⏱️
+
+## 🔍 Debugging Tips
+
+### View RabbitMQ Queues
+```
+http://localhost:15672/
+```
+
+### Check Application Logs
+```bash
+# All services log to console with SLF4J
+# Look for "[SERVICE A]" or "[SERVICE B]" prefixes
+```
+
+### Enable Debug Logging
+Update `application.yml`:
+```yaml
+logging:
+  level:
+    com.springbus: DEBUG
+    org.springframework.cloud.bus: DEBUG
+```
+
+## 📖 Important Concepts
+
+### RemoteApplicationEvent
+- Custom events must extend `RemoteApplicationEvent`
+- Spring Cloud Bus automatically serializes to JSON and sends via RabbitMQ
+- Remote services receive via message broker deserialization
+
+### @RemoteApplicationEventScan
+- **Critical**: Must be added to receiving services
+- Enables automatic deserialization of custom RemoteApplicationEvent classes
+- Without it, custom events won't be received
+
+### Jackson2JsonMessageConverter
+- Configures JSON serialization for AMQP messages
+- Bean configuration in `RabbitMQConfig.java`
+
+### @EventListener
+- Listens for both local and remote events (when using RemoteApplicationEvent)
+- Spring automatically routes RabbitMQ messages to appropriate listeners
+- Works seamlessly with Spring Cloud Bus
+
+## 🐛 Common Issues & Solutions
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Events not received | Missing `@RemoteApplicationEventScan` | Add annotation to Application class |
+| RabbitMQ connection failed | Docker not running | Run `./scripts/start-rabbitmq.sh` |
+| Configuration not refreshing | Bus not enabled | Ensure `spring.cloud.bus.enabled=true` |
+| Port already in use | Another service using same port | Kill existing process or change port in `application.yml` |
+
+## 📞 Support
+
+For detailed setup and testing, refer to:
+- **[QUICK_START.md](QUICK_START.md)** - Quick reference guide
+- Individual `application.yml` files - Service configuration
+- Source code comments - Implementation details
+
 ---
 
-## 🔍 Next Steps
-
-After completing all projects:
-
-1. **Experiment with configuration:**
-   - Add database URLs to config
-   - Add feature flags that can be toggled via bus
-
-2. **Explore advanced patterns:**
-   - Learn about `@BusLocalEvent` (local-only events)
-   - Implement custom event filtering
-   - Add authentication to bus messages
-
-3. **Switch message brokers:**
-   - Replace RabbitMQ with Kafka
-   - Understand broker abstraction via Spring Cloud Stream
-
-4. **Production patterns:**
-   - Error handling and resilience
-   - Event monitoring and tracing
-   - Deployment strategies
-
----
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| "Connection refused" | Start RabbitMQ: `docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management-alpine` |
-| Port already in use | Kill process: `lsof -i :PORT` then `kill -9 PID` |
-| Config not updating | Verify Config Server is running on port 8888 |
-| Events not received | Check RabbitMQ dashboard for connections/channels |
-| Build fails | Run `mvn clean install -U` to force dependency updates |
-
----
-
-## 📖 Learning Resources
-
-- [Spring Cloud Bus Documentation](https://docs.spring.io/spring-cloud-bus/docs/current/reference/html/)
-- [Spring Cloud Config Documentation](https://docs.spring.io/spring-cloud-config/docs/current/reference/html/)
-- [RabbitMQ Documentation](https://www.rabbitmq.com/documentation.html)
-- [Spring Cloud Concepts](https://spring.io/projects/spring-cloud)
-
----
-
-## ✅ Verification Checklist
-
-- [ ] Java 21+ installed
-- [ ] Maven 3.8+ installed
-- [ ] Docker installed
-- [ ] Project 1 runs and connects to RabbitMQ
-- [ ] Project 2 config clients refresh via `/busrefresh`
-- [ ] Project 3 Service B receives events from Service A
-- [ ] All 6 services communicate via bus
-- [ ] No errors in logs or output
-
----
-
-## 📞 Summary
-
-This learning path teaches **Spring Cloud Bus** through hands-on projects:
-- ✅ Understand microservice communication patterns
-- ✅ Learn configuration management at scale
-- ✅ Master event-driven architecture
-- ✅ Build resilient distributed systems
-
-**Start with Project 1 and follow the [RUN_GUIDE.md](RUN_GUIDE.md) for step-by-step instructions!**
-
-Happy Learning! 🚀
+**Happy Learning! 🎉** Build distributed, event-driven microservices with Spring Cloud Bus!

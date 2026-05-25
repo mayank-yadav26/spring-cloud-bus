@@ -1,262 +1,438 @@
-# ⚡ Quick Start Guide - Spring Cloud Bus Learning Path
+# ⚡ Quick Start Guide - Spring Cloud Bus
 
-## 📋 Summary of What's Been Created
-
-✅ **All 4 projects are ready!**
-
-- **Project 1:** Bus Foundation (1 service on port 8080)
-- **Project 2:** Config Server + 2 Config Clients (3 services on ports 8888, 8081, 8082)
-- **Project 3:** Custom Events - Service A + Service B (2 services on ports 8091, 8092)
-- **Project 4:** Optional Multi-Service Coordination (can be created later)
-
-**Total files created:** 50+  
-**Total lines of code:** 2000+  
-**All projects:** ✅ Built and ready to run
+Complete step-by-step guide to run and test all projects.
 
 ---
 
-## 🚀 Get Started in 3 Minutes
+## 🚀 Get Started in 5 Minutes
 
 ### Step 1: Start RabbitMQ (1 min)
 
 ```bash
-cd .
+cd spring-cloud-bus
 ./scripts/start-rabbitmq.sh
 ```
 
-RabbitMQ will run in Docker on:
-- AMQP: `localhost:5672`
-- Dashboard: `http://localhost:15672` (guest/guest)
-
-### Step 2: Run Project 1 (1 min)
-
-```bash
-cd ./project-1-bus-foundation
-mvn spring-boot:run
+**Expected Output:**
+```
+=== Starting RabbitMQ ===
+Starting RabbitMQ container...
+[container_id]
 ```
 
-### Step 3: Test in another terminal (1 min)
-
+**Verify RabbitMQ is running:**
 ```bash
-# Test health
-curl http://localhost:8080/health
+# Check if container is running
+docker ps | grep rabbitmq
 
-# Trigger bus refresh
-curl -X POST http://localhost:8080/actuator/busrefresh
-
-# Check logs in the app terminal - you'll see bus messages!
-```
-
-**That's it! You've successfully tested Spring Cloud Bus connectivity! 🎉**
-
----
-
-## 📚 Run All Projects (Without Shortcuts)
-
-If you want to run all projects manually without scripts:
-
-### Terminal 1: RabbitMQ
-```bash
-docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management-alpine
-```
-
-### Terminal 2: Project 1
-```bash
-cd ./project-1-bus-foundation
-mvn spring-boot:run
-```
-
-### Terminal 3: Project 2 Config Server
-```bash
-cd ./project-2-config-server
-mvn spring-boot:run
-```
-
-### Terminal 4: Project 2 Client 1
-```bash
-cd ./project-2-config-client-1
-mvn spring-boot:run
-```
-
-### Terminal 5: Project 2 Client 2
-```bash
-cd ./project-2-config-client-2
-mvn spring-boot:run
-```
-
-### Terminal 6: Project 3 Service A
-```bash
-cd ./project-3-custom-events/service-a
-mvn spring-boot:run
-```
-
-### Terminal 7: Project 3 Service B
-```bash
-cd ./project-3-custom-events/service-b
-mvn spring-boot:run
+# Access Management Dashboard
+# URL: http://localhost:15672 (guest/guest)
 ```
 
 ---
 
-## 🔗 Useful Commands
+## 📋 Project 1: Bus Foundation (10 minutes)
+
+### Run Project 1
+
+```bash
+cd project-1-bus-foundation
+mvn clean install
+mvn spring-boot:run
+```
+
+**Expected Output:**
+```
+...
+2026-05-25 10:30:00 - c.s.foundation.BusController - ...
+Started ServiceApplication in X seconds
+```
 
 ### Test Project 1
+
+**Open another terminal:**
+
 ```bash
+# Test health endpoint
 curl http://localhost:8080/health
+# Expected: "Bus Foundation App is running!"
+
+# Test info endpoint
+curl http://localhost:8080/info
+# Expected: "Project 1: Bus Foundation & RabbitMQ Setup"
+
+# Test bus refresh (triggers bus message)
 curl -X POST http://localhost:8080/actuator/busrefresh
+# Expected: {}
+
+# Check logs in the first terminal - you should see Spring Cloud Bus messages
+```
+
+✅ **Project 1 Complete!** You've verified RabbitMQ connectivity.
+
+---
+
+## 📋 Project 2: Config Server & Clients (20 minutes)
+
+### Terminal 1: Config Server
+
+```bash
+cd project-2-config-server
+mvn clean install
+mvn spring-boot:run
+```
+
+**Expected Output:**
+```
+Started ConfigServerApplication in X seconds
+Embedded server started on port(s): 8888
+```
+
+### Terminal 2: Config Client 1
+
+```bash
+cd project-2-config-client-1
+mvn clean install
+mvn spring-boot:run
+```
+
+**Expected Output:**
+```
+Started ConfigClientApplication in X seconds
+Embedded server started on port(s): 8081
+config: Fetching config from server...
+```
+
+### Terminal 3: Config Client 2
+
+```bash
+cd project-2-config-client-2
+mvn clean install
+mvn spring-boot:run
+```
+
+**Expected Output:**
+```
+Started ConfigClientApplication in X seconds
+Embedded server started on port(s): 8082
 ```
 
 ### Test Project 2
+
+**Open another terminal (Terminal 4):**
+
 ```bash
-# Get config before update
+# Get current config from Client 1
 curl http://localhost:8081/config
+# Expected: {"message":"Config from server","version":"1.0"}
 
-# Update config file, then refresh
-curl -X POST http://localhost:8081/actuator/busrefresh
-
-# Get config after update (should be updated on both clients!)
-curl http://localhost:8081/config
+# Get current config from Client 2
 curl http://localhost:8082/config
+# Expected: {"message":"Config from server","version":"1.0"}
+
+# Health checks
+curl http://localhost:8888/health   # Config Server
+curl http://localhost:8081/health   # Client 1
+curl http://localhost:8082/health   # Client 2
+```
+
+### Update Configuration
+
+**Edit the config file for Client 1:**
+
+```bash
+# Open file
+nano project-2-config-server/src/main/resources/config/config-client-1.yml
+
+# Change the message
+message: "Updated config - Testing Spring Cloud Bus!"
+
+# Save and exit (Ctrl+O, Enter, Ctrl+X)
+```
+
+### Refresh All Clients via Bus
+
+```bash
+# Send busrefresh to Client 1 (message will broadcast to all via bus)
+curl -X POST http://localhost:8081/actuator/busrefresh
+# Expected: {}
+
+# Verify the config was updated on both clients
+curl http://localhost:8081/config
+# Expected: {"message":"Updated config - Testing Spring Cloud Bus!","version":"2.0"}
+
+curl http://localhost:8082/config
+# Expected: {"message":"Updated config - Testing Spring Cloud Bus!","version":"2.0"}
+```
+
+**Watch logs in Terminal 2 & 3** - You'll see refresh messages from Spring Cloud Bus!
+
+✅ **Project 2 Complete!** Dynamic configuration refresh works across all services.
+
+---
+
+## 📋 Project 3: Custom Events Broadcasting (15 minutes) ⭐
+
+### Terminal 1: Service A (Publisher)
+
+```bash
+cd project-3-custom-events/service-a
+mvn clean install
+mvn spring-boot:run
+```
+
+**Expected Output:**
+```
+Started ServiceAApplication in X seconds
+Embedded server started on port(s): 8091
+```
+
+### Terminal 2: Service B (Listener)
+
+```bash
+cd project-3-custom-events/service-b
+mvn clean install
+mvn spring-boot:run
+```
+
+**Expected Output:**
+```
+Started ServiceBApplication in X seconds
+Embedded server started on port(s): 8092
 ```
 
 ### Test Project 3
+
+**Open another terminal (Terminal 3):**
+
 ```bash
-# Send event from Service A
-curl -X POST "http://localhost:8091/notify?message=Hello"
+# Check health of both services
+curl http://localhost:8091/health
+# Expected: "Service A (Publisher) is running!"
 
-# Check Service B logs - you should see the event!
+curl http://localhost:8092/health
+# Expected: "Service B (Listener) is running!"
+
+# Send notification from Service A to Service B
+curl -X POST "http://localhost:8091/notify?message=Hello%20from%20Service%20A%21"
+# Expected: "Notification sent: Hello from Service A!"
 ```
 
-### Stop RabbitMQ
+### Verify Event Reception
+
+**Watch Terminal 2 (Service B logs):**
+
+You should see:
+```
+========================================
+[SERVICE B] Received NotificationEvent via Spring Cloud Bus!
+[SERVICE B] Message: Hello from Service A!
+[SERVICE B] From Service: [service-instance-id]
+[SERVICE B] Destination: *
+[SERVICE B] Event Timestamp: 1748328600000
+[SERVICE B] Event ID: [event-id]
+[SERVICE B] Event fully processed
+========================================
+```
+
+### Send Multiple Events
+
+Try sending different messages:
+
 ```bash
-./scripts/stop-rabbitmq.sh
+curl -X POST "http://localhost:8091/notify?message=Event%201"
+curl -X POST "http://localhost:8091/notify?message=Event%202"
+curl -X POST "http://localhost:8091/notify?message=Spring%20Cloud%20Bus%20is%20Amazing"
+```
+
+**Watch Service B receive each message in real-time!**
+
+✅ **Project 3 Complete!** Custom events broadcast successfully via Spring Cloud Bus.
+
+---
+
+## 🔍 Complete Test Scenario (Run All Projects)
+
+### Setup (Execute in this order)
+
+**Terminal 1: Start RabbitMQ**
+```bash
+./scripts/start-rabbitmq.sh
+```
+
+**Terminal 2: Project 2 - Config Server**
+```bash
+cd project-2-config-server && mvn spring-boot:run
+```
+
+**Terminal 3: Project 2 - Config Client 1**
+```bash
+cd project-2-config-client-1 && mvn spring-boot:run
+```
+
+**Terminal 4: Project 2 - Config Client 2**
+```bash
+cd project-2-config-client-2 && mvn spring-boot:run
+```
+
+**Terminal 5: Project 3 - Service A**
+```bash
+cd project-3-custom-events/service-a && mvn spring-boot:run
+```
+
+**Terminal 6: Project 3 - Service B**
+```bash
+cd project-3-custom-events/service-b && mvn spring-boot:run
+```
+
+**Terminal 7: Run All Tests**
+```bash
+#!/bin/bash
+echo "=== Testing Project 2 - Config Server ==="
+curl http://localhost:8081/config
+
+echo -e "\n=== Testing Project 3 - Event Broadcasting ==="
+curl -X POST "http://localhost:8091/notify?message=Complete%20Test%21"
+
+# Give Service B time to receive and log the event
+sleep 2
+echo "Check Terminal 6 logs for event reception"
 ```
 
 ---
 
-## 📖 Detailed Documentation
+## 🎯 Testing Endpoints Summary
 
-For comprehensive, step-by-step instructions for each project, see:
-
-👉 **[RUN_GUIDE.md](RUN_GUIDE.md)**
-
-This document contains:
-- Detailed verification steps for each project
-- Troubleshooting section
-- All endpoints and their expected responses
-- File locations and structure
-
----
-
-## 🎓 What You'll Learn
-
-| Project | What You Learn |
-|---------|-------|
-| **1** | How Spring Cloud Bus connects to RabbitMQ |
-| **2** | Dynamic configuration management without app restart |
-| **3** | Custom event broadcasting between microservices |
-| **4** | (Optional) Coordinating multiple services via bus |
+| Project | Service | Port | Endpoint | Method | Purpose |
+|---------|---------|------|----------|--------|---------|
+| 1 | Bus Foundation | 8080 | `/health` | GET | Health check |
+| 1 | Bus Foundation | 8080 | `/info` | GET | Service info |
+| 1 | Bus Foundation | 8080 | `/actuator/busrefresh` | POST | Trigger bus refresh |
+| 2 | Config Server | 8888 | `/health` | GET | Health check |
+| 2 | Config Client 1 | 8081 | `/config` | GET | Get current config |
+| 2 | Config Client 1 | 8081 | `/actuator/busrefresh` | POST | Refresh config via bus |
+| 2 | Config Client 2 | 8082 | `/config` | GET | Get current config |
+| 3 | Service A | 8091 | `/notify?message=TEXT` | POST | Send notification |
+| 3 | Service A | 8091 | `/health` | GET | Health check |
+| 3 | Service B | 8092 | `/health` | GET | Health check |
 
 ---
 
-## 📂 Project Structure
+## 🐛 Troubleshooting
+
+### Problem: "Connection refused" errors
+
+**Solution:**
+```bash
+# Check if RabbitMQ is running
+docker ps | grep rabbitmq
+
+# If not running, start it
+./scripts/start-rabbitmq.sh
+```
+
+### Problem: Events not being received in Service B
+
+**Cause:** Missing `@RemoteApplicationEventScan` annotation
+
+**Solution:** Check `ServiceBApplication.java` has:
+```java
+@RemoteApplicationEventScan(basePackageClasses = NotificationEvent.class)
+```
+
+### Problem: Port already in use
+
+**Solution:** Kill existing process:
+```bash
+# Find process on port 8091 (for example)
+lsof -i :8091
+
+# Kill it
+kill -9 [PID]
+```
+
+### Problem: Maven build fails
+
+**Solution:**
+```bash
+# Clean and rebuild
+mvn clean install -U
+
+# Force download of dependencies
+mvn clean dependency:resolve
+```
+
+---
+
+## 📊 Expected Architecture
 
 ```
-./
-├── project-1-bus-foundation/       ← Start here!
-├── project-2-config-server/        ← Then here
-├── project-2-config-client-1/
-├── project-2-config-client-2/
-├── project-3-custom-events/
-│   ├── shared/
-│   ├── service-a/
-│   └── service-b/
-├── scripts/                        ← Helper scripts
-├── RUN_GUIDE.md                    ← Full documentation
-├── README.md                       ← Project overview
-└── QUICK_START.md                  ← This file!
+┌─────────────────────┐
+│   RabbitMQ Server   │
+│   (Docker)          │
+│   :5672, :15672     │
+└──────────┬──────────┘
+           │
+    ┌──────┴──────┬──────────┬──────────┐
+    │             │          │          │
+    ▼             ▼          ▼          ▼
+┌────────┐  ┌──────────┐ ┌──────────┐ ┌──────────┐
+│Project1│  │Config    │ │Service A │ │Service B │
+│  :8080 │  │Server    │ │  :8091   │ │  :8092   │
+└────────┘  │  :8888   │ └────┬─────┘ └────┬─────┘
+            │          │      │            │
+            ├──────────┤  ┌────▼────┐      │
+            │          │  │Events   │      │
+            │ Clients  │  │via Bus  ◄──────┘
+            │ 1&2      │  │         │
+            │ :8081,82 │  └─────────┘
+            └──────────┘
 ```
 
 ---
 
 ## ✅ Verification Checklist
 
-After following Quick Start steps:
-
-- [ ] RabbitMQ container is running
-- [ ] Project 1 starts without errors
-- [ ] `GET /health` returns "Bus Foundation App is running!"
-- [ ] RabbitMQ dashboard shows a connection
-- [ ] All projects built successfully in setup.sh
-
----
-
-## 🆘 Common Issues & Fixes
-
-| Problem | Solution |
-|---------|----------|
-| Docker error when starting RabbitMQ | Make sure Docker daemon is running |
-| Port already in use (e.g., 8080) | Run `lsof -i :8080` then `kill -9 PID` |
-| Maven build fails | Run `mvn clean install -U` to update dependencies |
-| "Connection refused" when starting services | RabbitMQ is not running - start it first! |
+- [ ] RabbitMQ is running (`docker ps | grep rabbitmq`)
+- [ ] Project 1 health endpoint responds
+- [ ] Project 2 config server returns configuration
+- [ ] Project 2 busrefresh updates config on both clients
+- [ ] Project 3 Service A receives notify requests
+- [ ] Project 3 Service B logs received events
+- [ ] Events appear in real-time in Service B logs
 
 ---
 
-## 🎯 Next Steps
+## 📞 Quick Reference
 
-1. **Complete Project 1** (30 min)
-   - Understand bus connectivity basics
-   - See RabbitMQ in action
+### Stop All Services
 
-2. **Complete Project 2** (1-1.5 hrs)
-   - Learn configuration management at scale
-   - Experience dynamic refresh without restart
+```bash
+# Stop RabbitMQ
+./scripts/stop-rabbitmq.sh
 
-3. **Complete Project 3** (1 hr)
-   - Build custom events
-   - See inter-service communication
+# Kill all running Java processes (careful!)
+pkill -f spring-boot:run
+```
 
-4. **Explore Project 4** (Optional, 1-1.5 hrs)
-   - Combine all concepts
-   - Build more complex scenarios
+### Clean Build All Projects
 
----
+```bash
+# Clean all pom.xml dependencies
+mvn clean -pl project-1-bus-foundation,project-2-config-server,project-2-config-client-1,project-2-config-client-2,project-3-custom-events/shared,project-3-custom-events/service-a,project-3-custom-events/service-b
+```
 
-## 📖 Learn More
+### View RabbitMQ Status
 
-- **RUN_GUIDE.md** - Complete project guide
-- **README.md** - Project overview and resources
-- **Plan document** - Learning path details (`.github/prompts/plan-springCloudBus.prompt.md`)
+```bash
+# Management UI
+open http://localhost:15672  # or visit in browser
+# Username: guest
+# Password: guest
 
----
-
-## 💡 Key Takeaway
-
-**Spring Cloud Bus = Distributed communication framework for microservices**
-
-Using RabbitMQ as the message broker, it enables:
-- Configuration updates propagated to all services instantly
-- Custom events broadcast across your system
-- Loosely coupled microservice architecture
-
-**Now you understand how large-scale distributed systems communicate! 🚀**
+# Check queues, connections, etc.
+```
 
 ---
 
-## 📞 Files & Locations
-
-| File | Purpose |
-|------|---------|
-| `RUN_GUIDE.md` | Step-by-step guide for all 4 projects |
-| `README.md` | Project overview & quick reference |
-| `QUICK_START.md` | This file! 3-minute quick start |
-| `.github/prompts/plan-springCloudBus.prompt.md` | Learning plan & design decisions |
-| `scripts/` | Helper shell scripts |
-
----
-
-**Ready? Start with: `./scripts/start-rabbitmq.sh`**
-
-**Then: `cd project-1-bus-foundation && mvn spring-boot:run`**
-
-**Enjoy learning Spring Cloud Bus! 🎉**
+🎉 **You've now mastered Spring Cloud Bus!** Learn more in [README.md](README.md)

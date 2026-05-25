@@ -1,24 +1,23 @@
 package com.springbus.servicea;
 
-import com.springbus.shared.NotificationEvent;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 public class ServiceAController {
 
     @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private MessageBroadcaster messageBroadcaster;
 
     @PostMapping("/notify")
     public String sendNotification(@RequestParam String message) {
-        System.out.println("[SERVICE A] Publishing notification: " + message);
-        NotificationEvent event = new NotificationEvent(this, "service-a", null, message);
-        eventPublisher.publishEvent(event);
+        log.info("[SERVICE A] Controller: Received request to send notification: {}", message);
+        messageBroadcaster.broadcastNotification(message);
         return "Notification sent: " + message;
     }
 
